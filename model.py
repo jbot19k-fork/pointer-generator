@@ -24,6 +24,10 @@ import tensorflow as tf
 from attention_decoder import attention_decoder
 from tensorflow.contrib.tensorboard.plugins import projector
 
+def add_epsilon(dist, epsilon=sys.float_info.epsilon):
+    epsilon_mask = tf.ones_like(dist) * epsilon
+    return dist + epsilon_mask
+  
 FLAGS = tf.app.flags.FLAGS
 
 class SummarizationModel(object):
@@ -143,11 +147,7 @@ class SummarizationModel(object):
     outputs, out_state, attn_dists, p_gens, coverage = attention_decoder(inputs, self._dec_in_state, self._enc_states, self._enc_padding_mask, cell, initial_state_attention=(hps.mode=="decode"), pointer_gen=hps.pointer_gen, use_coverage=hps.coverage, prev_coverage=prev_coverage)
 
     return outputs, out_state, attn_dists, p_gens, coverage
-
-  def add_epsilon(dist, epsilon=sys.float_info.epsilon):
-    epsilon_mask = tf.ones_like(dist) * epsilon
-    return dist + epsilon_mask
-  
+    
   def _calc_final_dist(self, vocab_dists, attn_dists):
     """Calculate the final distribution, for the pointer-generator model
 
