@@ -18,6 +18,7 @@
 
 import os
 import time
+import sys
 import numpy as np
 import tensorflow as tf
 from attention_decoder import attention_decoder
@@ -143,6 +144,10 @@ class SummarizationModel(object):
 
     return outputs, out_state, attn_dists, p_gens, coverage
 
+  def add_epsilon(dist, epsilon=sys.float_info.epsilon):
+    epsilon_mask = tf.ones_like(dist) * epsilon
+    return dist + epsilon_mask
+  
   def _calc_final_dist(self, vocab_dists, attn_dists):
     """Calculate the final distribution, for the pointer-generator model
 
@@ -179,7 +184,7 @@ class SummarizationModel(object):
       # final_dists is a list length max_dec_steps; each entry is a tensor shape (batch_size, extended_vsize) giving the final distribution for that decoder timestep
       # Note that for decoder timesteps and examples corresponding to a [PAD] token, this is junk - ignore.
       final_dists = [vocab_dist + copy_dist for (vocab_dist,copy_dist) in zip(vocab_dists_extended, attn_dists_projected)]
-
+      final_dists = [add_epsilon(dist) for dist in final_dists]
       return final_dists
 
   def _add_emb_vis(self, embedding_var):
